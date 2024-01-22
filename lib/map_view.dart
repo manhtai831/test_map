@@ -106,14 +106,14 @@ class _MapViewState extends State<MapView> {
     // final String jsonString =
     //     await rootBundle.loadString('assets/images/template.geojson');
     final now = DateTime.now();
-    if (data != null) {
-      jsonData = data;
-    } else {
+    // if (data != null) {
+    //   jsonData = data;
+    // } else {
       Directory dir = Directory('/storage/emulated/0/Download');
-      String path = dir.path + '/data.json';
+      String path = dir.path + '/data2.json';
       jsonData = await compute(readFile, path);
       await box.put(key, jsonData as Map);
-    }
+    // }
 
     dev.log('jsonData: $jsonData');
     print('Read file done');
