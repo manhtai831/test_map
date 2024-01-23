@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "flutter_test_custom_map",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "flutter_test_custom_map (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "flutter_test_custom_map (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "flutter_map",
+            "cwd": "pkg/flutter_map",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "flutter_map (profile mode)",
+            "cwd": "pkg/flutter_map",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "flutter_map (release mode)",
+            "cwd": "pkg/flutter_map",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

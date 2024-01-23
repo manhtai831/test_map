@@ -33,6 +33,7 @@ export 'package:flutter_map/src/layer/general/mobile_layer_transformer.dart';
 export 'package:flutter_map/src/layer/general/translucent_pointer.dart';
 export 'package:flutter_map/src/layer/marker_layer.dart';
 export 'package:flutter_map/src/layer/overlay_image_layer.dart';
+export 'package:flutter_map/src/layer/rect_layer/rect_layer.dart';
 export 'package:flutter_map/src/layer/polygon_layer/polygon_layer.dart';
 export 'package:flutter_map/src/layer/polyline_layer/polyline_layer.dart';
 export 'package:flutter_map/src/layer/tile_layer/tile_builder.dart';

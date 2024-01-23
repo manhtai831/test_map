@@ -97,7 +97,6 @@ class _FlutterMapStateContainer extends State<FlutterMap>
   Widget build(BuildContext context) {
     super.build(context);
 
-    print('Rebuild futter map');
 
     final widgets = ClipRect(
       child: Stack(

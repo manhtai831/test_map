@@ -27,8 +27,10 @@ class _MapViewState extends State<MapView> {
   /// Controls the behavior of the map when the user's location changes.
   late final StreamController<double?> _followCurrentLocationStreamController;
   List<Widget> polygons = [];
+  List<PointModel> mPoints = [];
   MapController controller = MapController();
   Map jsonData = {};
+  List<dynamic> rainData = [];
   Completer completer = Completer();
   LatLngBounds? bound;
   Timer? timer;
@@ -92,7 +94,10 @@ class _MapViewState extends State<MapView> {
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.treasurecontent.guardian.dev',
             ),
-            ...polygons,
+            // ...polygons,
+            RectLayer(
+              points: mPoints,
+            )
           ]);
 
   Future<void> _readFile() async {
@@ -109,13 +114,13 @@ class _MapViewState extends State<MapView> {
     // if (data != null) {
     //   jsonData = data;
     // } else {
-      Directory dir = Directory('/storage/emulated/0/Download');
-      String path = dir.path + '/data2.json';
-      jsonData = await compute(readFile, path);
-      await box.put(key, jsonData as Map);
+    Directory dir = Directory('/storage/emulated/0/Download');
+    String path = '${dir.path}/rain.json';
+    rainData = await compute(readFile, path);
+    // await box.put(key, jsonData as Map);
     // }
 
-    dev.log('jsonData: $jsonData');
+    dev.log('jsonData: $rainData');
     print('Read file done');
 
     completer.complete();
@@ -123,8 +128,10 @@ class _MapViewState extends State<MapView> {
 
   mapperData() async {
     await completer.future;
-    final map = {'bound': bound ?? controller.camera.visibleBounds, 'jsonData': jsonData};
-    polygons = await compute(_mapper, map);
+    // final map = {'bound': bound ?? controller.camera.visibleBounds, 'jsonData': jsonData};
+    final map = {'bound': bound ?? controller.camera.visibleBounds, 'jsonData': rainData};
+    mPoints = await compute(_mapperPoint, map);
+    // polygons = await compute(_mapper, map);
     setState(() {});
   }
 }
@@ -175,8 +182,37 @@ Future<List<Widget>> _mapper(Map<String, dynamic> data) async {
   return polygons;
 }
 
-Future<Map<String, dynamic>> readFile(String path) async {
+Future<List<PointModel>> _mapperPoint(Map<String, dynamic> data) async {
+  print('Looopeeeeeeeeeeeeeeeeeee: ${DateTime.now()}');
+
+  final jsonData = data['jsonData'];
+  List<PointModel> pgons = [];
+  for (final item in jsonData as List<dynamic>) {
+    double x = double.parse(((item as List<dynamic>)[1] * 1.0 as double).toStringAsFixed(7));
+    double y = double.parse(((item as List<dynamic>)[0] * 1.0 as double).toStringAsFixed(7));
+    LatLng currentPoint = LatLng(x, y);
+
+    PointModel polygon = PointModel(
+      color: Colors.red.withOpacity(.2),
+      borderColor: Colors.red,
+      borderStrokeWidth: 1,
+      point: currentPoint,
+    );
+
+    pgons.add(polygon);
+  }
+  print('Looopee Doneeeeeeeeeeeeeeeeeeeeeeee:${pgons.length} - ${DateTime.now()}');
+  return pgons;
+}
+
+// Future<Map<String, dynamic>> readFile(String path) async {
+//   File file = File(path);
+//   String data = file.readAsStringSync();
+//   return jsonDecode(data) as Map<String, dynamic>;
+// }
+
+Future<List<dynamic>> readFile(String path) async {
   File file = File(path);
   String data = file.readAsStringSync();
-  return jsonDecode(data) as Map<String, dynamic>;
+  return jsonDecode(data) as List<dynamic>;
 }
