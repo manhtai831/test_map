@@ -74,7 +74,7 @@ class RectLayer<R extends Object> extends StatefulWidget {
 }
 
 class _RectLayerState<R extends Object> extends State<RectLayer<R>> {
-  final _cachedSimplifiedPolylines = <int, List<Polyline<R>>>{};
+  final _cachedSimplifiedPolylines = <int, List<PointModel>>{};
 
   final _culledPolylines =
       <Polyline<R>>[]; // Avoids repetitive memory reallocation
@@ -88,20 +88,20 @@ class _RectLayerState<R extends Object> extends State<RectLayer<R>> {
     // IF old no & new no, nothing
     // IF old yes & new yes & (different tolerance | different lines), both
     //    otherwise, nothing
-    // if (oldWidget.simplificationTolerance != 0 &&
-    //     widget.simplificationTolerance != 0 &&
-    //     (!listEquals(oldWidget.polylines, widget.polylines) ||
-    //         oldWidget.simplificationTolerance !=
-    //             widget.simplificationTolerance)) {
-    //   _cachedSimplifiedPolylines.clear();
-    //   _computeZoomLevelSimplification(MapCamera.of(context).zoom.floor());
-    // } else if (oldWidget.simplificationTolerance != 0 &&
-    //     widget.simplificationTolerance == 0) {
-    //   _cachedSimplifiedPolylines.clear();
-    // } else if (oldWidget.simplificationTolerance == 0 &&
-    //     widget.simplificationTolerance != 0) {
-    //   _computeZoomLevelSimplification(MapCamera.of(context).zoom.floor());
-    // }
+    if (oldWidget.simplificationTolerance != 0 &&
+        widget.simplificationTolerance != 0 &&
+        (!listEquals(oldWidget.points, widget.points) ||
+            oldWidget.simplificationTolerance !=
+                widget.simplificationTolerance)) {
+      _cachedSimplifiedPolylines.clear();
+      _computeZoomLevelSimplification(MapCamera.of(context).zoom.floor());
+    } else if (oldWidget.simplificationTolerance != 0 &&
+        widget.simplificationTolerance == 0) {
+      _cachedSimplifiedPolylines.clear();
+    } else if (oldWidget.simplificationTolerance == 0 &&
+        widget.simplificationTolerance != 0) {
+      _computeZoomLevelSimplification(MapCamera.of(context).zoom.floor());
+    }
   }
 
   @override
@@ -133,18 +133,18 @@ class _RectLayerState<R extends Object> extends State<RectLayer<R>> {
   }
 
   // TODO BEFORE v7: Use same algorithm as polygons
-  // List<Polyline<R>> _computeZoomLevelSimplification(int zoom) =>
-  //     _cachedSimplifiedPolylines[zoom] ??= widget.polylines
-  //         .map(
-  //           (polyline) => polyline.copyWithNewPoints(
-  //             simplify(
-  //               points: polyline.points,
-  //               tolerance: widget.simplificationTolerance / math.pow(2, zoom),
-  //               highQuality: true,
-  //             ),
-  //           ),
-  //         )
-  //         .toList();
+  List<PointModel> _computeZoomLevelSimplification(int zoom) =>
+      _cachedSimplifiedPolylines[zoom] ??= widget.points
+          .map(
+            (polyline) => polyline.copyWithNewPoints(
+              simplifyV2(
+                points: polyline.point!,
+                tolerance: widget.simplificationTolerance / math.pow(2, zoom),
+                highQuality: true,
+              ),
+            ),
+          )
+          .toList();
 
   List<Polyline<R>> _aggressivelyCullPolylines({
     required List<Polyline<R>> polylines,

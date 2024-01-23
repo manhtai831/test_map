@@ -89,23 +89,25 @@ class _RectPainter extends CustomPainter {
   //   return true;
   // }
 
-  Rect getRect(Offset offset)=> Rect.fromCenter(center:offset, width: 70,height: 60);
+  Rect getRect(Offset offset, {double? width, double? height}) => Rect.fromLTWH(offset.dx - 70 / 2, offset.dy - 60 / 2, width ?? 70, height ?? 61);
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
+    Rect? outRect;
     var path = ui.Path();
     var borderPath = ui.Path();
-    var filterPath = ui.Path();
+    // var filterPath = ui.Path();
     var paint = Paint();
     var needsLayerSaving = false;
 
     Paint? borderPaint;
-    Paint? filterPaint;
+    // Paint? filterPaint;
     int? lastHash;
 
     void drawPaths() {
-      final hasBorder = borderPaint != null && filterPaint != null;
+      // final hasBorder = borderPaint != null && filterPaint != null;
+      final hasBorder = borderPaint != null;
       if (hasBorder) {
         if (needsLayerSaving) {
           canvas.saveLayer(rect, Paint());
@@ -115,13 +117,13 @@ class _RectPainter extends CustomPainter {
         borderPath = ui.Path();
         borderPaint = null;
 
-        if (needsLayerSaving) {
-          canvas.drawPath(filterPath, filterPaint!);
-          filterPath = ui.Path();
-          filterPaint = null;
+        // if (needsLayerSaving) {
+        //   canvas.drawPath(filterPath, filterPaint!);
+        //   filterPath = ui.Path();
+        //   filterPaint = null;
 
-          canvas.restore();
-        }
+        //   canvas.restore();
+        // }
       }
       canvas.drawPath(path, paint);
       path = ui.Path();
@@ -132,6 +134,16 @@ class _RectPainter extends CustomPainter {
 
     for (final point in points) {
       final offset = getOffset(origin, point.point!);
+      int nextIndex = points.indexOf(point) + 1;
+      if (nextIndex < points.length) {
+        double diff = double.parse((points[nextIndex].point!.longitude - point.point!.longitude).toStringAsFixed(4));
+        print('double diff = longitude1 ${points[nextIndex].point!.longitude} - leng2 ${point.point!.longitude} = $diff;');
+
+        if (diff == 0.013) {
+          outRect = getRect(offset, width: 75);
+        }
+      }
+
       final hash = point.renderHashCode;
       if (needsLayerSaving || (lastHash != null && lastHash != hash)) {
         drawPaths();
@@ -139,21 +151,21 @@ class _RectPainter extends CustomPainter {
       lastHash = hash;
       needsLayerSaving = point.color.opacity < 1.0 || (point.gradientColors?.any((c) => c.opacity < 1.0) ?? false);
 
-      late final double strokeWidth;
-      if (point.useStrokeWidthInMeter) {
-        strokeWidth = _metersToStrokeWidth(
-          origin,
-          point.point!,
-          offset,
-          point.strokeWidth,
-        );
-      } else {
-        strokeWidth = point.strokeWidth;
-      }
+      // late final double strokeWidth;
+      // if (point.useStrokeWidthInMeter) {
+      //   strokeWidth = _metersToStrokeWidth(
+      //     origin,
+      //     point.point!,
+      //     offset,
+      //     point.strokeWidth,
+      //   );
+      // } else {
+      //   strokeWidth = point.strokeWidth;
+      // }
 
       final isDotted = point.isDotted;
       paint = Paint()
-        ..strokeWidth = strokeWidth
+        ..strokeWidth = 1
         ..strokeCap = point.strokeCap
         ..strokeJoin = point.strokeJoin
         ..style = isDotted ? PaintingStyle.fill : PaintingStyle.stroke
@@ -169,19 +181,18 @@ class _RectPainter extends CustomPainter {
         // finally drawing the line fill.
         borderPaint = Paint()
           ..color = point.borderColor
-          ..strokeWidth = strokeWidth + point.borderStrokeWidth
+          ..strokeWidth = 1
           ..strokeCap = point.strokeCap
           ..strokeJoin = point.strokeJoin
-          ..style = PaintingStyle.stroke 
-          ..blendMode = BlendMode.srcOver;
+          ..style = PaintingStyle.stroke;
 
-        filterPaint = Paint()
-          ..color = point.borderColor.withAlpha(255)
-          ..strokeWidth = strokeWidth
-          ..strokeCap = point.strokeCap
-          ..strokeJoin = point.strokeJoin
-          ..style = isDotted ? PaintingStyle.fill : PaintingStyle.stroke
-          ..blendMode = BlendMode.dstOut;
+        // filterPaint = Paint()
+        //   ..color = point.borderColor.withAlpha(255)
+        //   ..strokeWidth = strokeWidth
+        //   ..strokeCap = point.strokeCap
+        //   ..strokeJoin = point.strokeJoin
+        //   ..style = isDotted ? PaintingStyle.fill : PaintingStyle.stroke
+        //   ..blendMode = BlendMode.dstOut;
       }
 
       // final radius = paint.strokeWidth / 2;
@@ -195,12 +206,13 @@ class _RectPainter extends CustomPainter {
       //   }
       //   _paintDottedLine(path, offsets, radius, spacing);
       // } else {
-        // if (borderPaint != null && filterPaint != null) {
-        //   _paintLine(borderPath, offset);
-        //   _paintLine(filterPath, offset);
-        // }
-        _paintLine(borderPath, offset);
-        // _paintLine(path, offset);
+      // if (borderPaint != null && filterPaint != null) {
+      //   _paintLine(borderPath, offset);
+      // _paintLine(filterPath, offset);
+      // }
+      _paintLine(borderPath, offset, rect: outRect);
+      outRect = null;
+      // _paintLine(path, offset);
       // }
     }
 
@@ -226,8 +238,8 @@ class _RectPainter extends CustomPainter {
     path.addOval(Rect.fromCircle(center: offsets.last, radius: radius));
   }
 
-  void _paintLine(ui.Path path, Offset offset) {
-    path.addRect(getRect(offset));
+  void _paintLine(ui.Path path, Offset offset, {Rect? rect}) {
+    path.addRect(rect ?? getRect(offset));
   }
 
   ui.Gradient _paintGradient(Polyline polyline, List<Offset> offsets) =>

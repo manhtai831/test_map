@@ -148,6 +148,26 @@ List<LatLng> simplify({
   );
 }
 
+LatLng simplifyV2({
+  required LatLng points,
+  required double tolerance,
+  required bool highQuality,
+}) {
+  // Don't simplify anything less than a square
+  // if (points.length <= 4) return points;
+
+  // List<DoublePoint> nextPoints = List<DoublePoint>.generate(
+  //   points.length,
+  //   (i) => DoublePoint(points.longitude, points.latitude),
+  // );
+  // final double sqTolerance = tolerance * tolerance;
+  // nextPoints = highQuality
+  //     ? simplifyDouglasPeucker(nextPoints, sqTolerance)
+  //     : simplifyRadialDist(nextPoints, sqTolerance);
+
+  return  points;
+}
+
 List<DoublePoint> simplifyPoints({
   required final List<DoublePoint> points,
   required double tolerance,
