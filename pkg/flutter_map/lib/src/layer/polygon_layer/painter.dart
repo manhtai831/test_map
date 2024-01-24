@@ -2,6 +2,10 @@ part of 'polygon_layer.dart';
 
 /// The [_PolygonPainter] class is used to render [Polygon]s for
 /// the [PolygonLayer].
+final painter = Paint();
+var filledPath = ui.Path();
+var borderPath = ui.Path();
+
 class _PolygonPainter extends CustomPainter {
   /// Reference to the list of [_ProjectedPolygon]s
   final List<_ProjectedPolygon> polygons;
@@ -30,12 +34,9 @@ class _PolygonPainter extends CustomPainter {
       max: getOffset(camera, origin, bbox.northEast),
     );
   }
- final painter = Paint();
+
   @override
   void paint(Canvas canvas, Size size) {
-   
-    var filledPath = ui.Path();
-    var borderPath = ui.Path();
     Polygon? lastPolygon;
     int? lastHash;
 
@@ -98,7 +99,7 @@ class _PolygonPainter extends CustomPainter {
       }
 
       // Afterwards deal with more complicated holes.
-  /*     final holePointsList = polygon.holePointsList;
+      /*     final holePointsList = polygon.holePointsList;
       if (holePointsList != null && holePointsList.isNotEmpty) {
         // Ideally we'd use `Path.combine(PathOperation.difference, ...)`
         // instead of evenOdd fill-type, however it creates visual artifacts
@@ -247,9 +248,7 @@ class _PolygonPainter extends CustomPainter {
         distance += stepLength;
       }
 
-      startDistance = distance < totalDistance
-          ? stepLength - (totalDistance - distance)
-          : distance - totalDistance;
+      startDistance = distance < totalDistance ? stepLength - (totalDistance - distance) : distance - totalDistance;
     }
 
     path.addOval(Rect.fromCircle(center: offsets.last, radius: radius));
