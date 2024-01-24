@@ -96,38 +96,11 @@ class _RectPainter extends CustomPainter {
     final rect = Offset.zero & size;
     Rect? outRect;
     var path = ui.Path();
-    var borderPath = ui.Path();
-    // var filterPath = ui.Path();
     var paint = Paint();
-    var needsLayerSaving = false;
 
-    Paint? borderPaint;
-    // Paint? filterPaint;
-    int? lastHash;
 
     void drawPaths() {
-      // final hasBorder = borderPaint != null && filterPaint != null;
-      final hasBorder = borderPaint != null;
-      if (hasBorder) {
-        if (needsLayerSaving) {
-          canvas.saveLayer(rect, Paint());
-        }
-
-        canvas.drawPath(borderPath, borderPaint!);
-        borderPath = ui.Path();
-        borderPaint = null;
-
-        // if (needsLayerSaving) {
-        //   canvas.drawPath(filterPath, filterPaint!);
-        //   filterPath = ui.Path();
-        //   filterPaint = null;
-
-        //   canvas.restore();
-        // }
-      }
       canvas.drawPath(path, paint);
-      path = ui.Path();
-      paint = Paint();
     }
 
     final origin = camera.project(camera.center).toOffset() - camera.size.toOffset() / 2;
@@ -144,13 +117,6 @@ class _RectPainter extends CustomPainter {
         }
       }
 
-      final hash = point.renderHashCode;
-      if (needsLayerSaving || (lastHash != null && lastHash != hash)) {
-        drawPaths();
-      }
-      lastHash = hash;
-      needsLayerSaving = point.color.opacity < 1.0 || (point.gradientColors?.any((c) => c.opacity < 1.0) ?? false);
-
       // late final double strokeWidth;
       // if (point.useStrokeWidthInMeter) {
       //   strokeWidth = _metersToStrokeWidth(
@@ -163,28 +129,23 @@ class _RectPainter extends CustomPainter {
       //   strokeWidth = point.strokeWidth;
       // }
 
-      final isDotted = point.isDotted;
-      paint = Paint()
+      paint
         ..strokeWidth = 1
         ..strokeCap = point.strokeCap
         ..strokeJoin = point.strokeJoin
-        ..style = isDotted ? PaintingStyle.fill : PaintingStyle.stroke
+        ..style = PaintingStyle.stroke
         ..blendMode = BlendMode.srcOver;
-
-      if (point.gradientColors == null) {
-        paint.color = point.color;
-      }
 
       if (point.borderStrokeWidth > 0.0) {
         // Outlined lines are drawn by drawing a thicker path underneath, then
         // stenciling the middle (in case the line fill is transparent), and
         // finally drawing the line fill.
-        borderPaint = Paint()
-          ..color = point.borderColor
-          ..strokeWidth = 1
-          ..strokeCap = point.strokeCap
-          ..strokeJoin = point.strokeJoin
-          ..style = PaintingStyle.stroke;
+        // borderPaint = Paint()
+        //   ..color = point.borderColor
+        //   ..strokeWidth = 1
+        //   ..strokeCap = point.strokeCap
+        //   ..strokeJoin = point.strokeJoin
+        //   ..style = PaintingStyle.stroke;
 
         // filterPaint = Paint()
         //   ..color = point.borderColor.withAlpha(255)
@@ -210,7 +171,7 @@ class _RectPainter extends CustomPainter {
       //   _paintLine(borderPath, offset);
       // _paintLine(filterPath, offset);
       // }
-      _paintLine(borderPath, offset, rect: outRect);
+      _paintLine(path, offset, rect: outRect);
       outRect = null;
       // _paintLine(path, offset);
       // }

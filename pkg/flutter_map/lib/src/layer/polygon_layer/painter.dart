@@ -30,9 +30,10 @@ class _PolygonPainter extends CustomPainter {
       max: getOffset(camera, origin, bbox.northEast),
     );
   }
-
+ final painter = Paint();
   @override
   void paint(Canvas canvas, Size size) {
+   
     var filledPath = ui.Path();
     var borderPath = ui.Path();
     Polygon? lastPolygon;
@@ -47,11 +48,11 @@ class _PolygonPainter extends CustomPainter {
       // ignore: deprecated_member_use_from_same_package
       if (polygon.isFilled ?? true) {
         if (polygon.color case final color?) {
-          final paint = Paint()
+          painter
             ..style = PaintingStyle.fill
             ..color = color;
 
-          canvas.drawPath(filledPath, paint);
+          canvas.drawPath(filledPath, painter);
         }
       }
 
@@ -61,8 +62,6 @@ class _PolygonPainter extends CustomPainter {
         canvas.drawPath(borderPath, borderPaint);
       }
 
-      filledPath = ui.Path();
-      borderPath = ui.Path();
       lastPolygon = null;
       lastHash = null;
     }
@@ -99,7 +98,7 @@ class _PolygonPainter extends CustomPainter {
       }
 
       // Afterwards deal with more complicated holes.
-      final holePointsList = polygon.holePointsList;
+  /*     final holePointsList = polygon.holePointsList;
       if (holePointsList != null && holePointsList.isNotEmpty) {
         // Ideally we'd use `Path.combine(PathOperation.difference, ...)`
         // instead of evenOdd fill-type, however it creates visual artifacts
@@ -119,9 +118,9 @@ class _PolygonPainter extends CustomPainter {
         if (!polygon.disableHolesBorder && polygon.borderStrokeWidth > 0.0) {
           _addHoleBordersToPath(borderPath, polygon, holeOffsetsList);
         }
-      }
+      } */
 
-      if (!drawLabelsLast && polygonLabels && polygon.textPainter != null) {
+      /* if (!drawLabelsLast && polygonLabels && polygon.textPainter != null) {
         // Labels are expensive because:
         //  * they themselves cannot easily be pulled into our batched path
         //    painting with the given text APIs
@@ -147,11 +146,11 @@ class _PolygonPainter extends CustomPainter {
 
           painter(canvas);
         }
-      }
+      } */
     }
 
     drawPaths();
-
+/* 
     if (polygonLabels && drawLabelsLast) {
       for (final projectedPolygon in polygons) {
         if (projectedPolygon.points.isEmpty) {
@@ -174,12 +173,12 @@ class _PolygonPainter extends CustomPainter {
           painter?.call(canvas);
         }
       }
-    }
+    } */
   }
 
   Paint _getBorderPaint(Polygon polygon) {
     final isDotted = polygon.isDotted;
-    return Paint()
+    return painter
       ..color = polygon.borderColor
       ..strokeWidth = polygon.borderStrokeWidth
       ..strokeCap = polygon.strokeCap

@@ -136,13 +136,14 @@ class _RectLayerState<R extends Object> extends State<RectLayer<R>> {
   List<PointModel> _computeZoomLevelSimplification(int zoom) =>
       _cachedSimplifiedPolylines[zoom] ??= widget.points
           .map(
-            (polyline) => polyline.copyWithNewPoints(
-              simplifyV2(
-                points: polyline.point!,
-                tolerance: widget.simplificationTolerance / math.pow(2, zoom),
-                highQuality: true,
-              ),
-            ),
+            (polyline) => polyline
+            // .copyWithNewPoints(
+            //   simplifyV2(
+            //     points: polyline.point!,
+            //     tolerance: widget.simplificationTolerance / math.pow(2, zoom),
+            //     highQuality: true,
+            //   ),
+            // ),
           )
           .toList();
 
