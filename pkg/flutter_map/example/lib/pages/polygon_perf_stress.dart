@@ -72,10 +72,7 @@ class _PolygonPerfStressPageState extends State<PolygonPerfStressPage> {
                     geoJsonParser.connectionState != ConnectionState.done ||
                             geoJsonParser.data == null
                         ? const SizedBox.shrink()
-                        : PolygonLayer(
-                            simplificationTolerance: simplificationTolerance,
-                            polygons: geoJsonParser.data!.polygons,
-                          ),
+                        : SizedBox(),
               ),
             ],
           ),

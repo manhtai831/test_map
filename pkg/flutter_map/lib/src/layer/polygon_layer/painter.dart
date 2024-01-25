@@ -109,11 +109,8 @@ class _PolygonPainter extends CustomPainter {
         // using the web renderer.
         filledPath.fillType = PathFillType.evenOdd;
 
-        final holeOffsetsList = List<List<Offset>>.generate(
-          holePointsList.length,
-          (i) => getOffsets(camera, origin, holePointsList[i]),
-          growable: false,
-        );
+        final holeOffsetsList = holePointsList.map((e) => getOffsets(camera, origin, e));
+       
 
         for (final holeOffsets in holeOffsetsList) {
           filledPath.addPolygon(holeOffsets, true);
@@ -207,7 +204,7 @@ class _PolygonPainter extends CustomPainter {
   void _addHoleBordersToPath(
     ui.Path path,
     Polygon polygon,
-    List<List<Offset>> holeOffsetsList,
+    Iterable<List<Offset>> holeOffsetsList,
   ) {
     if (polygon.isDotted) {
       final borderRadius = polygon.borderStrokeWidth / 2;

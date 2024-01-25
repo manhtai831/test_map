@@ -73,65 +73,7 @@ class PolygonPage extends StatelessWidget {
               PolygonLayer(
                 simplificationTolerance: 0,
                 polygons: [
-                  Polygon(
-                    points: _notFilledPoints,
-                    borderColor: Colors.red,
-                    borderStrokeWidth: 4,
-                  ),
-                  Polygon(
-                    points: _filledPoints,
-                    color: Colors.purple,
-                    borderColor: Colors.yellow,
-                    borderStrokeWidth: 4,
-                  ),
-                  Polygon(
-                    points: _notFilledDotedPoints,
-                    isDotted: true,
-                    borderColor: Colors.green,
-                    borderStrokeWidth: 4,
-                  ),
-                  Polygon(
-                    points: _filledDotedPoints,
-                    isDotted: true,
-                    borderStrokeWidth: 4,
-                    borderColor: Colors.lightBlue,
-                    color: Colors.yellow,
-                  ),
-                  Polygon(
-                    points: _labelPoints,
-                    borderStrokeWidth: 4,
-                    borderColor: Colors.purple,
-                    label: 'Label!',
-                  ),
-                  Polygon(
-                    points: _labelRotatedPoints,
-                    borderStrokeWidth: 4,
-                    borderColor: Colors.purple,
-                    label: 'Rotated!',
-                    rotateLabel: true,
-                    labelPlacement: PolygonLabelPlacement.polylabel,
-                  ),
-                  Polygon(
-                    points: _holeOuterPoints,
-                    holePointsList: [_holeInnerPoints],
-                    borderStrokeWidth: 4,
-                    borderColor: Colors.green,
-                  ),
-                  Polygon(
-                    points: _holeOuterPoints
-                        .map((latlng) =>
-                            LatLng(latlng.latitude, latlng.longitude + 8))
-                        .toList(),
-                    isDotted: true,
-                    holePointsList: [
-                      _holeInnerPoints
-                          .map((latlng) =>
-                              LatLng(latlng.latitude, latlng.longitude + 8))
-                          .toList()
-                    ],
-                    borderStrokeWidth: 4,
-                    borderColor: Colors.orange,
-                  ),
+                
                 ],
               ),
             ],

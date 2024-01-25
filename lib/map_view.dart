@@ -33,6 +33,7 @@ class _MapViewState extends State<MapView> {
   Completer completer = Completer();
   LatLngBounds? bound;
   Timer? timer;
+
   @override
   void initState() {
     _followCurrentLocationStreamController = StreamController<double?>();
@@ -70,7 +71,6 @@ class _MapViewState extends State<MapView> {
             //   () => _alignOnUpdate = AlignOnUpdate.never,
             // ),message
             onMapEvent: (event) async {
-              // print('event: ${event.source}');
               // if (event.source == MapEventSource.dragEnd ||
               //     event.source == MapEventSource.flingAnimationController ||
               //     event.source == MapEventSource.multiFingerEnd ||
@@ -82,7 +82,7 @@ class _MapViewState extends State<MapView> {
               //       eventBound.southWest == bound?.southWest) return;
               //   bound = event.camera.visibleBounds;
               //   timer?.cancel();
-              //   timer = Timer(Duration(milliseconds: 100), mapperData);
+              //   timer = Timer(Duration(milliseconds: 100), () => mapperData());
               // }
             },
 
@@ -93,7 +93,9 @@ class _MapViewState extends State<MapView> {
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.treasurecontent.guardian.dev',
             ),
-            ...polygons,
+            ...polygons
+            // if(jsonData.isNotEmpty) PolygonChildren(jsonData: jsonData,)
+            // ...polygons,
             //  if(polygonV2s.isNotEmpty)   PolygonLayerV2(PolygonLayerOptions(polygonCulling: true, polygons: polygonV2s))
           ]);
 
@@ -128,7 +130,10 @@ class _MapViewState extends State<MapView> {
     final map = {'bound': bound ?? controller.camera.visibleBounds, 'jsonData': jsonData};
     polygons = await compute(_mapper, map);
     // polygonV2s = await compute(_mapper, map);
-    setState(() {});
+    // _followCurrentLocationStreamController.add(1);
+    setState(() {
+      
+    });
   }
 }
 
@@ -138,12 +143,12 @@ Future<List<Widget>> _mapper(Map<String, dynamic> data) async {
   List<Widget> polygons = [];
   final bound = data['bound'];
   final jsonData = data['jsonData'];
-  List<List<Polygon>> pgons = [];
-  List<Polygon> children = [];
+
   for (final item in jsonData as List<dynamic>) {
+    List<Polygon> pgons = [];
     Color random = Color((Random().nextDouble() * 0xFFFFFF).toInt());
     Polygon polygon = Polygon(
-      color: Colors.red.withOpacity(.5),
+      color: Colors.red.withOpacity(.8),
       borderColor: Colors.red,
       borderStrokeWidth: 0,
       isFilled: true,
@@ -161,17 +166,18 @@ Future<List<Widget>> _mapper(Map<String, dynamic> data) async {
       polygon.points.add(currentPoint);
       // }
     }
-    if (polygon.points.isNotEmpty) {
-      children.add(polygon);
+
+    if (polygon.points.isNotEmpty ) {
+      pgons.add(polygon);
     }
-    pgons.add(children);
+    if (pgons.isNotEmpty) {
+      polygons.add(PolygonLayer(
+        polygons: pgons,
+        polygonCulling: true,
+      ));
+    }
   }
-  if (pgons.isNotEmpty) {
-    polygons.add(PolygonLayer(
-      polygons: pgons,
-      polygonCulling: true,
-    ));
-  }
+
   print('Looopee Doneeeeeeeeeeeeeeeeeeeeeeee:polygons.length ${polygons.length} ${DateTime.now()}');
   // return polygons;
   return polygons;

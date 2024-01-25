@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -19,7 +20,7 @@ part 'projected_polygon.dart';
 @immutable
 class PolygonLayer extends StatefulWidget {
   /// [Polygon]s to draw
-  final List<List<Polygon>> polygons;
+  final List<Polygon> polygons;
 
   /// Whether to cull polygons and polygon sections that are outside of the
   /// viewport
@@ -64,7 +65,8 @@ class PolygonLayer extends StatefulWidget {
 class _PolygonLayerState extends State<PolygonLayer> {
   Iterable<_ProjectedPolygon>? _cachedProjectedPolygons;
   final _cachedSimplifiedPolygons = <int, Iterable<_ProjectedPolygon>>{};
-
+  Iterable<_ProjectedPolygon>? culled;
+  Timer? timer;
   @override
   void didUpdateWidget(PolygonLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -72,16 +74,21 @@ class _PolygonLayerState extends State<PolygonLayer> {
     // Reuse cache
     if (widget.simplificationTolerance != 0 &&
         oldWidget.simplificationTolerance == widget.simplificationTolerance &&
-        listEquals(oldWidget.polygons, widget.polygons)) return;
+        listEquals(oldWidget.polygons, widget.polygons)) {
+      return;
+    }
 
     _cachedSimplifiedPolygons.clear();
     _cachedProjectedPolygons = null;
   }
 
   @override
-  Widget build(BuildContext context) {
-    final camera = MapCamera.of(context);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
 
+  recaculateWidget() {
+    final camera = MapCamera.of(context);
     final projected = _cachedProjectedPolygons ??= widget.polygons.map((e) => _ProjectedPolygon.fromPolygon(camera.crs.projection, e));
 
     final simplified = widget.simplificationTolerance <= 0
@@ -92,25 +99,36 @@ class _PolygonLayerState extends State<PolygonLayer> {
             camera: camera,
           );
 
-    final culled = !widget.polygonCulling
-        ? simplified
-        : simplified.where(
-            (p) => p.polygon.boundingBox.isOverlapping(camera.visibleBounds),
-          );
-    if (culled.isEmpty) {
-      return SizedBox();
+    culled = _computeOverlapPolygon({'simplified': simplified, 'visibleBounds': camera.visibleBounds});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final camera = MapCamera.of(context);
+    recaculateWidget();
+
+    if (!(culled != null && culled!.isNotEmpty)) {
+      return const SizedBox();
     }
 
     return MobileLayerTransformer(
       child: CustomPaint(
         painter: _PolygonPainter(
-          polygons: culled,
+          polygons: culled!,
           camera: camera,
           polygonLabels: widget.polygonLabels,
           drawLabelsLast: widget.drawLabelsLast,
         ),
         size: Size(camera.size.x, camera.size.y),
       ),
+    );
+  }
+
+  static Iterable<_ProjectedPolygon> _computeOverlapPolygon(Map<String, dynamic> json) {
+    Iterable<_ProjectedPolygon> simplified = json['simplified'] as Iterable<_ProjectedPolygon>;
+    LatLngBounds visibleBounds = json['visibleBounds'] as LatLngBounds;
+    return simplified.where(
+      (p) => p.polygon.boundingBox.isOverlapping(visibleBounds),
     );
   }
 
