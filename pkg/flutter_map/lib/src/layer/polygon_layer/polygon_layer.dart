@@ -19,7 +19,7 @@ part 'projected_polygon.dart';
 @immutable
 class PolygonLayer extends StatefulWidget {
   /// [Polygon]s to draw
-  final List<Polygon> polygons;
+  final List<List<Polygon>> polygons;
 
   /// Whether to cull polygons and polygon sections that are outside of the
   /// viewport
@@ -62,8 +62,8 @@ class PolygonLayer extends StatefulWidget {
 }
 
 class _PolygonLayerState extends State<PolygonLayer> {
-  List<_ProjectedPolygon>? _cachedProjectedPolygons;
-  final _cachedSimplifiedPolygons = <int, List<_ProjectedPolygon>>{};
+  Iterable<_ProjectedPolygon>? _cachedProjectedPolygons;
+  final _cachedSimplifiedPolygons = <int, Iterable<_ProjectedPolygon>>{};
 
   @override
   void didUpdateWidget(PolygonLayer oldWidget) {
@@ -82,19 +82,11 @@ class _PolygonLayerState extends State<PolygonLayer> {
   Widget build(BuildContext context) {
     final camera = MapCamera.of(context);
 
-    final projected = _cachedProjectedPolygons ??= List.generate(
-      widget.polygons.length,
-      (i) => _ProjectedPolygon.fromPolygon(
-        camera.crs.projection,
-        widget.polygons[i],
-      ),
-      growable: false,
-    );
+    final projected = _cachedProjectedPolygons ??= widget.polygons.map((e) => _ProjectedPolygon.fromPolygon(camera.crs.projection, e));
 
     final simplified = widget.simplificationTolerance <= 0
         ? projected
-        : _cachedSimplifiedPolygons[camera.zoom.floor()] ??=
-            _computeZoomLevelSimplification(
+        : _cachedSimplifiedPolygons[camera.zoom.floor()] ??= _computeZoomLevelSimplification(
             polygons: projected,
             pixelTolerance: widget.simplificationTolerance,
             camera: camera,
@@ -102,11 +94,12 @@ class _PolygonLayerState extends State<PolygonLayer> {
 
     final culled = !widget.polygonCulling
         ? simplified
-        : simplified
-            .where(
-              (p) => p.polygon.boundingBox.isOverlapping(camera.visibleBounds),
-            )
-            .toList();
+        : simplified.where(
+            (p) => p.polygon.boundingBox.isOverlapping(camera.visibleBounds),
+          );
+    if (culled.isEmpty) {
+      return SizedBox();
+    }
 
     return MobileLayerTransformer(
       child: CustomPaint(
@@ -121,8 +114,8 @@ class _PolygonLayerState extends State<PolygonLayer> {
     );
   }
 
-  static List<_ProjectedPolygon> _computeZoomLevelSimplification({
-    required List<_ProjectedPolygon> polygons,
+  static Iterable<_ProjectedPolygon> _computeZoomLevelSimplification({
+    required Iterable<_ProjectedPolygon> polygons,
     required double pixelTolerance,
     required MapCamera camera,
   }) {
@@ -131,34 +124,17 @@ class _PolygonLayerState extends State<PolygonLayer> {
       zoom: camera.zoom.floor(),
       pixelTolerance: pixelTolerance,
     );
-
-    return List<_ProjectedPolygon>.generate(
-      polygons.length,
-      (i) {
-        final polygon = polygons[i];
-        final holes = polygon.holePoints;
-
-        return _ProjectedPolygon._(
-          polygon: polygon.polygon,
-          points: simplifyPoints(
-            points: polygon.points,
-            tolerance: tolerance,
-            highQuality: true,
-          ),
-          holePoints: holes == null
-              ? null
-              : List<List<DoublePoint>>.generate(
-                  holes.length,
-                  (j) => simplifyPoints(
-                    points: holes[j],
-                    tolerance: tolerance,
-                    highQuality: true,
-                  ),
-                  growable: false,
-                ),
-        );
-      },
-      growable: false,
-    );
+    return polygons.map((e) => _ProjectedPolygon._(
+        polygon: e.polygon,
+        points: simplifyPoints(
+          points: e.points,
+          tolerance: tolerance,
+          highQuality: true,
+        ),
+        holePoints: e.holePoints?.map((e1) => simplifyPoints(
+              points: e1,
+              tolerance: tolerance,
+              highQuality: true,
+            ))));
   }
 }

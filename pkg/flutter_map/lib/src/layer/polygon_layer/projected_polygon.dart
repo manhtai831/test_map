@@ -3,8 +3,8 @@ part of 'polygon_layer.dart';
 @immutable
 class _ProjectedPolygon {
   final Polygon polygon;
-  final List<DoublePoint> points;
-  final List<List<DoublePoint>>? holePoints;
+  final Iterable<DoublePoint> points;
+  final Iterable<Iterable<DoublePoint>>? holePoints;
 
   const _ProjectedPolygon._({
     required this.polygon,
@@ -15,33 +15,17 @@ class _ProjectedPolygon {
   _ProjectedPolygon.fromPolygon(Projection projection, Polygon polygon)
       : this._(
           polygon: polygon,
-          points: List<DoublePoint>.generate(
-            polygon.points.length,
-            (j) {
-              final (x, y) = projection.projectXY(polygon.points[j]);
-              return DoublePoint(x, y);
-            },
-            growable: false,
-          ),
+          points: polygon.points.map((e) {
+            final (x, y) = projection.projectXY(e);
+            return DoublePoint(x, y);
+          }),
           holePoints: () {
             final holes = polygon.holePointsList;
             if (holes == null) return null;
-
-            return List<List<DoublePoint>>.generate(
-              holes.length,
-              (j) {
-                final points = holes[j];
-                return List<DoublePoint>.generate(
-                  points.length,
-                  (k) {
-                    final (x, y) = projection.projectXY(points[k]);
-                    return DoublePoint(x, y);
-                  },
-                  growable: false,
-                );
-              },
-              growable: false,
-            );
+            return holes.map((e) => e.map((e1) {
+                  final (x, y) = projection.projectXY(e1);
+                  return DoublePoint(x, y);
+                }));
           }(),
         );
 }

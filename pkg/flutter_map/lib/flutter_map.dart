@@ -35,6 +35,7 @@ export 'package:flutter_map/src/layer/marker_layer.dart';
 export 'package:flutter_map/src/layer/overlay_image_layer.dart';
 export 'package:flutter_map/src/layer/polygon_layer/polygon_layer.dart';
 export 'package:flutter_map/src/layer/polyline_layer/polyline_layer.dart';
+export 'package:flutter_map/src/layer/polygon_layer_v2/polygon_layer_v2.dart';
 export 'package:flutter_map/src/layer/tile_layer/tile_builder.dart';
 export 'package:flutter_map/src/layer/tile_layer/tile_coordinates.dart';
 export 'package:flutter_map/src/layer/tile_layer/tile_display.dart';

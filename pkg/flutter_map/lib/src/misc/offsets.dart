@@ -43,7 +43,7 @@ List<Offset> getOffsets(MapCamera camera, Offset origin, List<LatLng> points) {
 List<Offset> getOffsetsXY(
   MapCamera camera,
   Offset origin,
-  List<DoublePoint> points,
+  Iterable<DoublePoint> points,
 ) {
   // Critically create as little garbage as possible. This is called on every frame.
   final crs = camera.crs;
@@ -59,7 +59,7 @@ List<Offset> getOffsetsXY(
     final CrsWithStaticTransformation mcrs = crs;
     final v = List<Offset>.filled(len, Offset.zero);
     for (int i = 0; i < len; ++i) {
-      final p = points[i];
+      final p = points.elementAt(i);
       final (x, y) = mcrs.transform(p.x, p.y, zoomScale);
       v[i] = Offset(x + ox, y + oy);
     }
@@ -68,7 +68,7 @@ List<Offset> getOffsetsXY(
 
   final v = List<Offset>.filled(len, Offset.zero);
   for (int i = 0; i < len; ++i) {
-    final p = points[i];
+    final p = points.elementAt(i);
     final (x, y) = crs.transform(p.x, p.y, zoomScale);
     v[i] = Offset(x + ox, y + oy);
   }

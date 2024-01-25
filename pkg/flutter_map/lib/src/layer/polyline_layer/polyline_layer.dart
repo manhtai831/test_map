@@ -142,7 +142,7 @@ class _PolylineLayerState<R extends Object> extends State<PolylineLayer<R>> {
                 points: polyline.points,
                 tolerance: widget.simplificationTolerance / math.pow(2, zoom),
                 highQuality: true,
-              ),
+              ).toList(),
             ),
           )
           .toList();

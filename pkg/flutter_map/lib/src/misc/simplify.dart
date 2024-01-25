@@ -61,15 +61,15 @@ double getSqSegDist(
 }
 
 //! Might actually be more expensive than DP, which is also better
-List<DoublePoint> simplifyRadialDist(
-  List<DoublePoint> points,
+Iterable<DoublePoint> simplifyRadialDist(
+  Iterable<DoublePoint> points,
   double sqTolerance,
 ) {
-  DoublePoint prevPoint = points[0];
+  DoublePoint prevPoint = points.first;
   final List<DoublePoint> newPoints = [prevPoint];
   late DoublePoint point;
   for (int i = 1, len = points.length; i < len; i++) {
-    point = points[i];
+    point = points.elementAt(i);
     if (point.distanceSq(prevPoint) > sqTolerance) {
       newPoints.add(point);
       prevPoint = point;
@@ -82,19 +82,19 @@ List<DoublePoint> simplifyRadialDist(
 }
 
 void _simplifyDPStep(
-  List<DoublePoint> points,
+  Iterable<DoublePoint> points,
   final int first,
   final int last,
   double sqTolerance,
   List<DoublePoint> simplified,
 ) {
   double maxSqDist = sqTolerance;
-  final p0 = points[first];
-  final p1 = points[last];
+  final p0 = points.elementAt(first);
+  final p1 = points.elementAt(last);
 
   late int index;
   for (int i = first + 1; i < last; i++) {
-    final p = points[i];
+    final p = points.elementAt(i);
     final double sqDist = getSqSegDist(p.x, p.y, p0.x, p0.y, p1.x, p1.y);
 
     if (sqDist > maxSqDist) {
@@ -106,7 +106,7 @@ void _simplifyDPStep(
     if (index - first > 1) {
       _simplifyDPStep(points, first, index, sqTolerance, simplified);
     }
-    simplified.add(points[index]);
+    simplified.add(points.elementAt(index));
     if (last - index > 1) {
       _simplifyDPStep(points, index, last, sqTolerance, simplified);
     }
@@ -114,18 +114,18 @@ void _simplifyDPStep(
 }
 
 /// simplification using the Ramer-Douglas-Peucker algorithm
-List<DoublePoint> simplifyDouglasPeucker(
-  List<DoublePoint> points,
+Iterable<DoublePoint> simplifyDouglasPeucker(
+  Iterable<DoublePoint> points,
   double sqTolerance,
 ) {
   final int last = points.length - 1;
-  final List<DoublePoint> simplified = [points[0]];
+  final List<DoublePoint> simplified = [points.first];
   _simplifyDPStep(points, 0, last, sqTolerance, simplified);
-  simplified.add(points[last]);
+  simplified.add(points.elementAt(last));
   return simplified;
 }
 
-List<LatLng> simplify({
+Iterable<LatLng> simplify({
   required List<LatLng> points,
   required double tolerance,
   required bool highQuality,
@@ -133,23 +133,15 @@ List<LatLng> simplify({
   // Don't simplify anything less than a square
   if (points.length <= 4) return points;
 
-  List<DoublePoint> nextPoints = List<DoublePoint>.generate(
-    points.length,
-    (i) => DoublePoint(points[i].longitude, points[i].latitude),
-  );
+  Iterable<DoublePoint> nextPoints = points.map((e) => DoublePoint(e.longitude, e.latitude));
   final double sqTolerance = tolerance * tolerance;
-  nextPoints = highQuality
-      ? simplifyDouglasPeucker(nextPoints, sqTolerance)
-      : simplifyRadialDist(nextPoints, sqTolerance);
+  nextPoints = highQuality ? simplifyDouglasPeucker(nextPoints, sqTolerance) : simplifyRadialDist(nextPoints, sqTolerance);
 
-  return List<LatLng>.generate(
-    nextPoints.length,
-    (i) => LatLng(nextPoints[i].y, nextPoints[i].x),
-  );
+  return nextPoints.map((e) => LatLng(e.y, e.x));
 }
 
-List<DoublePoint> simplifyPoints({
-  required final List<DoublePoint> points,
+Iterable<DoublePoint> simplifyPoints({
+  required final Iterable<DoublePoint> points,
   required double tolerance,
   required bool highQuality,
 }) {
@@ -157,9 +149,7 @@ List<DoublePoint> simplifyPoints({
   if (points.length <= 4) return points;
 
   final double sqTolerance = tolerance * tolerance;
-  return highQuality
-      ? simplifyDouglasPeucker(points, sqTolerance)
-      : simplifyRadialDist(points, sqTolerance);
+  return highQuality ? simplifyDouglasPeucker(points, sqTolerance) : simplifyRadialDist(points, sqTolerance);
 }
 
 double getEffectiveSimplificationTolerance({

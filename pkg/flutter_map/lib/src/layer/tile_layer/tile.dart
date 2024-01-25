@@ -52,7 +52,6 @@ class _TileState extends State<Tile> {
   Widget build(BuildContext context) {
     final double left = widget.tileImage.coordinates.x * widget.scaledTileSize - widget.currentPixelOrigin.x;
     final double top = widget.tileImage.coordinates.y * widget.scaledTileSize - widget.currentPixelOrigin.y;
-    print('Tile Position: ${left} - ${top}');
     return Positioned(
       left: left,
       top: top,

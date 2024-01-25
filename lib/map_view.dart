@@ -27,8 +27,9 @@ class _MapViewState extends State<MapView> {
   /// Controls the behavior of the map when the user's location changes.
   late final StreamController<double?> _followCurrentLocationStreamController;
   List<Widget> polygons = [];
+  List<PolygonV2> polygonV2s = [];
   MapController controller = MapController();
-  Map jsonData = {};
+  List jsonData = [];
   Completer completer = Completer();
   LatLngBounds? bound;
   Timer? timer;
@@ -93,6 +94,7 @@ class _MapViewState extends State<MapView> {
               userAgentPackageName: 'com.treasurecontent.guardian.dev',
             ),
             ...polygons,
+            //  if(polygonV2s.isNotEmpty)   PolygonLayerV2(PolygonLayerOptions(polygonCulling: true, polygons: polygonV2s))
           ]);
 
   Future<void> _readFile() async {
@@ -109,10 +111,10 @@ class _MapViewState extends State<MapView> {
     // if (data != null) {
     //   jsonData = data;
     // } else {
-      Directory dir = Directory('/storage/emulated/0/Download');
-      String path = dir.path + '/data2.json';
-      jsonData = await compute(readFile, path);
-      await box.put(key, jsonData as Map);
+    Directory dir = Directory('/storage/emulated/0/Download');
+    String path = dir.path + '/data2.json';
+    jsonData = await compute(readFile, path);
+    // await box.put(key, jsonData as Map);
     // }
 
     dev.log('jsonData: $jsonData');
@@ -125,6 +127,7 @@ class _MapViewState extends State<MapView> {
     await completer.future;
     final map = {'bound': bound ?? controller.camera.visibleBounds, 'jsonData': jsonData};
     polygons = await compute(_mapper, map);
+    // polygonV2s = await compute(_mapper, map);
     setState(() {});
   }
 }
@@ -135,48 +138,47 @@ Future<List<Widget>> _mapper(Map<String, dynamic> data) async {
   List<Widget> polygons = [];
   final bound = data['bound'];
   final jsonData = data['jsonData'];
-  for (final item in jsonData['features'] as List<dynamic>) {
-    List<Polygon> pgons = [];
-    List<OverlayImage> images = [];
-    for (final coor in (item['geometry']?['coordinates'] as List<dynamic>?)!) {
-      Color random = Color((Random().nextDouble() * 0xFFFFFF).toInt());
-      Polygon polygon = Polygon(
-        color: Colors.red.withOpacity(.2),
-        borderColor: Colors.red,
-        borderStrokeWidth: 1,
-        isFilled: true,
-        points: [],
-      );
+  List<List<Polygon>> pgons = [];
+  List<Polygon> children = [];
+  for (final item in jsonData as List<dynamic>) {
+    Color random = Color((Random().nextDouble() * 0xFFFFFF).toInt());
+    Polygon polygon = Polygon(
+      color: Colors.red.withOpacity(.5),
+      borderColor: Colors.red,
+      borderStrokeWidth: 0,
+      isFilled: true,
+      points: [],
+    );
 
-      for (final point in (coor as List<dynamic>)) {
-        double x = double.parse(((point as List<dynamic>)[1] * 1.0 as double).toStringAsFixed(7));
-        double y = double.parse(((point as List<dynamic>)[0] * 1.0 as double).toStringAsFixed(7));
-        LatLng currentPoint = LatLng(x, y);
-        // bool isContain = bound!.contains(currentPoint);
-        bool isExisted =
-            polygon.points.where((element) => element.latitude == currentPoint.latitude && element.longitude == currentPoint.longitude).isNotEmpty;
-        if (!isExisted) {
-          polygon.points.add(currentPoint);
-        }
-      }
-
-      if (polygon.points.isNotEmpty) {
-        pgons.add(polygon);
-      }
+    for (final point in (item['polygon'] as List<dynamic>?)!) {
+      double x = double.parse(((point as List<dynamic>)[0] * 1.0 as double).toStringAsFixed(7));
+      double y = double.parse(((point as List<dynamic>)[1] * 1.0 as double).toStringAsFixed(7));
+      LatLng currentPoint = LatLng(x, y);
+      // bool isContain = bound!.contains(currentPoint);
+      bool isExisted =
+          polygon.points.where((element) => element.latitude == currentPoint.latitude && element.longitude == currentPoint.longitude).isNotEmpty;
+      // if (!isExisted) {
+      polygon.points.add(currentPoint);
+      // }
     }
-    if (pgons.isNotEmpty) {
-      polygons.add(PolygonLayer(
-        polygons: pgons,
-        polygonCulling: true,
-      ));
+    if (polygon.points.isNotEmpty) {
+      children.add(polygon);
     }
+    pgons.add(children);
   }
-  print('Looopee Doneeeeeeeeeeeeeeeeeeeeeeee: ${DateTime.now()}');
+  if (pgons.isNotEmpty) {
+    polygons.add(PolygonLayer(
+      polygons: pgons,
+      polygonCulling: true,
+    ));
+  }
+  print('Looopee Doneeeeeeeeeeeeeeeeeeeeeeee:polygons.length ${polygons.length} ${DateTime.now()}');
+  // return polygons;
   return polygons;
 }
 
-Future<Map<String, dynamic>> readFile(String path) async {
+Future<List> readFile(String path) async {
   File file = File(path);
   String data = file.readAsStringSync();
-  return jsonDecode(data) as Map<String, dynamic>;
+  return jsonDecode(data) as List;
 }
