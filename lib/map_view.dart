@@ -649,7 +649,6 @@ Future<List<RectMarker>> _mapperPoint(Map<String, dynamic> data) async {
         borderColor:  Colors.white,
         borderStrokeWidth: 1,
         point: currentPoint,
-        radius: 10,
         useRadiusInMeter: true);
     // bool isContain = bound!.contains(currentPoint);
     // if (isContain) {

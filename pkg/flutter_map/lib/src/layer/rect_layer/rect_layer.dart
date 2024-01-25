@@ -1,8 +1,7 @@
-import 'dart:ui';
-
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/src/misc/offsets.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 
 /// Immutable marker options for [RectMarker]. Circle markers are a more
@@ -15,9 +14,6 @@ class RectMarker {
 
   /// The center coordinates of the circle
   final LatLng point;
-
-  /// The radius of the circle
-  final double radius;
 
   /// The color of the circle area.
   final Color color;
@@ -35,7 +31,6 @@ class RectMarker {
   /// Constructor to create a new [RectMarker] object
   const RectMarker({
     required this.point,
-    required this.radius,
     this.key,
     this.useRadiusInMeter = false,
     this.color = const Color(0xFF00FF00),
@@ -58,8 +53,13 @@ class RectLayer extends StatefulWidget {
 }
 
 class _RectLayerState extends State<RectLayer> {
-  final sizeByLongtitude = <double, Size>{};
-  final sizeByLatitude = <double, Size>{};
+  /// Specific for rain data
+  final sizeByLongtitude = <double, bool>{};
+
+  /// Specific for rain data
+  final sizeByLatitude = <double, bool>{};
+
+  LatLng? latLng;
   @override
   void initState() {
     super.initState();
@@ -70,15 +70,19 @@ class _RectLayerState extends State<RectLayer> {
   Widget build(BuildContext context) {
     final camera = MapCamera.of(context);
     return MobileLayerTransformer(
-      child: CustomPaint(
-        painter: RectPainter(
-          widget.circles,
-          camera,
-          sizeByLongtitude,
-          sizeByLatitude,
+      child: GestureDetector(
+        onTapUp: _onTapUp,
+        child: CustomPaint(
+          painter: RectPainter(
+            widget.circles,
+            camera,
+            sizeByLongtitude,
+            sizeByLatitude,
+            latLng,
+          ),
+          size: Size(camera.size.x, camera.size.y),
+          isComplex: true,
         ),
-        size: Size(camera.size.x, camera.size.y),
-        isComplex: true,
       ),
     );
   }
@@ -91,14 +95,23 @@ class _RectLayerState extends State<RectLayer> {
       final diff = double.parse((nextRect.point.longitude - rect.point.longitude).toStringAsFixed(4));
       final diffLat = double.parse((nextRect.point.latitude - rect.point.latitude).toStringAsFixed(4));
       if (diff == 0.013) {
-        sizeByLongtitude[rect.point.longitude] = Size(5.5, 0);
+        sizeByLongtitude[rect.point.longitude] = true;
       }
       if (diffLat == 0.0084) {
-        sizeByLatitude[nextRect.point.latitude] = Size(5.5, 0);
+        sizeByLatitude[nextRect.point.latitude] = true;
       }
     }
-    print('sizeByOffset: ${sizeByLatitude} -----------------\n $sizeByLongtitude');
     if (mounted) setState(() {});
+  }
+
+  void _onTapUp(TapUpDetails details) {
+    final RenderBox? box = context.findRenderObject() as RenderBox?;
+    if (box != null) {
+      final offset = box.globalToLocal(details.globalPosition);
+        final camera = MapCamera.of(context);
+      latLng = camera.offsetToCrs(offset);
+      setState(() {});
+    }
   }
 }
 
@@ -108,67 +121,49 @@ class RectPainter extends CustomPainter {
   /// Reference to the list of [RectMarker]s of the [RectLayer].
   final List<RectMarker> circles;
 
-  final Map<double, Size> sizeByLongtitude;
-  final Map<double, Size> sizeByLatitude;
+  /// Map longtitude must resize
+  final Map<double, bool> sizeByLongtitude;
+
+  /// Map latitude must resize
+  final Map<double, bool> sizeByLatitude;
 
   /// Reference to the [MapCamera].
   final MapCamera camera;
 
+  final LatLng? latLng;
+
+  List<Rect> rects = [];
+
   /// Create a [RectPainter] instance by providing the required
   /// reference objects.
-  const RectPainter(
+  RectPainter(
     this.circles,
     this.camera,
     this.sizeByLongtitude,
     this.sizeByLatitude,
+    this.latLng,
   );
 
   // double getRadius()=> 5.38 * camera.zoom;
 
   @override
   void paint(Canvas canvas, Size size) {
+    rects.clear();
     const distance = Distance();
     final rect = Offset.zero & size;
     canvas.clipRect(rect);
-
-    // Let's calculate all the points grouped by color and radius
-    // final points = <Color, Map<double, List<Offset>>>{};
-    // final pointsFilledBorder = <Color, Map<double, List<Offset>>>{};
     final pointsBorder = <RectMarker, Map<double, Map<List<Size>, Offset>>>{};
     for (final circle in circles) {
       final offset = camera.getOffsetFromOrigin(circle.point);
-      // double radius = circle.radius;
-      // if (circle.useRadiusInMeter) {
-      //   final r = distance.offset(circle.point, circle.radius, 180);
-      //   final delta = offset - camera.getOffsetFromOrigin(r);
-      //   radius = delta.distance * 50;
-      // }
-      // points[circle.color] ??= {};
-      // points[circle.color]![radius] ??= [];
-      // points[circle.color]![radius]!.add(offset);
 
       if (circle.borderStrokeWidth > 0) {
-        // Check if color have some transparency or not
-        // As drawPoints is more efficient than drawCircle
-        if (circle.color.alpha == 0xFF) {
-          // double radiusBorder = circle.radius + circle.borderStrokeWidth;
-          // if (circle.useRadiusInMeter) {
-          //   final rBorder = distance.offset(circle.point, radiusBorder, 180);
-          //   final deltaBorder = offset - camera.getOffsetFromOrigin(rBorder);
-          //   radiusBorder = deltaBorder.distance * 50;
-          // }
-          // pointsFilledBorder[circle.borderColor] ??= {};
-          // pointsFilledBorder[circle.borderColor]![radiusBorder] ??= [];
-          // pointsFilledBorder[circle.borderColor]![radiusBorder]!.add(offset);
-        } else {
-          List<Size> rSize = [];
-          if (circle.useRadiusInMeter) {
-            rSize = getSizesInMetter(offset, circle, distance);
-          }
-          pointsBorder[circle] ??= {};
-          pointsBorder[circle]![circle.borderStrokeWidth] ??= {};
-          pointsBorder[circle]![circle.borderStrokeWidth]![rSize] = offset;
+        List<Size> rSize = [];
+        if (circle.useRadiusInMeter) {
+          rSize = getSizesInMetter(offset, circle, distance);
         }
+        pointsBorder[circle] ??= {};
+        pointsBorder[circle]![circle.borderStrokeWidth] ??= {};
+        pointsBorder[circle]![circle.borderStrokeWidth]![rSize] = offset;
       }
     }
 
@@ -186,44 +181,39 @@ class RectPainter extends CustomPainter {
           paintBorder
             ..style = PaintingStyle.fill
             ..color = fillColor;
-          _paintCircle(canvas, offset, sizes[0], sizes[1], paintBorder);
+
+          Rect rect = _createRect(offset, sizes[0], sizes[1]);
+          _paintRect(canvas, rect, paintBorder);
+          rects.add(rect);
+
+          /// caculate border by zoom color
           final LatLng rBorder = distance.offset(circle.point, strokeWidth, 180);
           final delta = offset - camera.getOffsetFromOrigin(rBorder);
           paintBorder
             ..style = PaintingStyle.stroke
             ..strokeWidth = delta.distance * 15
             ..color = strokeColor;
-          _paintCircle(canvas, offset, sizes[0], sizes[1], paintBorder);
+          _paintRect(canvas, rect, paintBorder);
         }
       }
     }
 
-    // Then the filled border in order to be under the circle
-    // final paintPoint = Paint()
-    //   ..isAntiAlias = false
-    //   ..strokeCap = StrokeCap.round;
-    // for (final color in pointsFilledBorder.keys) {
-    //   final paint = paintPoint..color = color;
-    //   final pointsByRadius = pointsFilledBorder[color]!;
-    //   for (final radius in pointsByRadius.keys) {
-    //     final pointsByRadiusColor = pointsByRadius[radius]!;
-    //     final radiusPaint = paint..strokeWidth = radius * 2;
-    //     _paintPoints(canvas, pointsByRadiusColor, radiusPaint);
-    //   }
-    // }
+    if (latLng != null) {
+     
+     final rOffset = camera.getOffsetFromOrigin(latLng!);
 
-    // And then the circle
-    // for (final color in points.keys) {
-    //   final paint = paintPoint..color = color;
-    //   final pointsByRadius = points[color]!;
-    //   for (final radius in pointsByRadius.keys) {
-    //     final pointsByRadiusColor = pointsByRadius[radius]!;
-    //     final radiusPaint = paint..strokeWidth = radius * 2;
-    //     _paintPoints(canvas, pointsByRadiusColor, radiusPaint);
-    //   }
-    // }
+      final mRect = rects.firstWhereOrNull((element) => element.contains(rOffset));
+      if (mRect != null) {
+        paintBorder
+          ..strokeWidth = 2
+          ..color = Colors.red.withOpacity(.9);
+
+        _paintRect(canvas, mRect, paintBorder);
+      }
+    }
   }
 
+  /// Caculate size of square by zoom ratio
   List<Size> getSizesInMetter(Offset offset, RectMarker circle, Distance distance) {
     Size csize = const Size(70, 60);
     Offset latlngToOffset(num distanceToMetter) {
@@ -233,9 +223,6 @@ class RectPainter extends CustomPainter {
 
     final moreSizeLongtitude = sizeByLongtitude[circle.point.longitude];
     final moreSizeLatitude = sizeByLatitude[circle.point.latitude];
-    if (moreSizeLatitude != null) {
-      print('circle.point.latitude: ${circle.point.latitude} - ');
-    }
 
     final distanceToMetter = moreSizeLongtitude == null ? 19.935208 : 21.61;
     final originOffset = latlngToOffset(20);
@@ -248,18 +235,16 @@ class RectPainter extends CustomPainter {
     return [originSize, csize];
   }
 
-  void _paintPoints(Canvas canvas, List<Offset> offsets, Paint paint) {
-    canvas.drawPoints(PointMode.points, offsets, paint);
+  Rect _createRect(Offset offset, Size origin, Size sFinal) {
+    final Rect rect = Rect.fromLTWH(offset.dx - (origin.width / 2), offset.dy - (origin.height / 2), sFinal.width, sFinal.height);
+    return rect;
   }
 
-  void _paintCircle(Canvas canvas, Offset offset, Size origin, Size sFinal, Paint paint) {
-    canvas.drawRect(Rect.fromLTWH(offset.dx - (origin.width / 2), offset.dy - (origin.height / 2), sFinal.width, sFinal.height), paint);
+  void _paintRect(Canvas canvas, Rect rect, Paint paint) {
+    canvas.drawRect(rect, paint);
   }
-
-  // void _paintCircle(Canvas canvas, Offset offset, double radius, Paint paint) {
-  //   canvas.drawRect(Rect.fromCircle(center: offset,radius: radius), paint);
-  // }
 
   @override
-  bool shouldRepaint(RectPainter oldDelegate) => circles != oldDelegate.circles || camera != oldDelegate.camera;
+  bool shouldRepaint(RectPainter oldDelegate) =>
+      circles != oldDelegate.circles || camera != oldDelegate.camera || latLng != oldDelegate.latLng;
 }
