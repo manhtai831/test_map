@@ -78,8 +78,8 @@ class _PolygonLayerState extends State<PolygonLayer> {
       return;
     }
 
-    _cachedSimplifiedPolygons.clear();
-    _cachedProjectedPolygons = null;
+    // _cachedSimplifiedPolygons.clear();
+    // _cachedProjectedPolygons = null;
   }
 
   @override
@@ -147,12 +147,12 @@ class _PolygonLayerState extends State<PolygonLayer> {
         points: simplifyPoints(
           points: e.points,
           tolerance: tolerance,
-          highQuality: true,
+          highQuality: false,
         ),
         holePoints: e.holePoints?.map((e1) => simplifyPoints(
               points: e1,
               tolerance: tolerance,
-              highQuality: true,
+              highQuality: false,
             ))));
   }
 }

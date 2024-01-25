@@ -45,6 +45,7 @@ class _PolygonPainter extends CustomPainter {
     void drawPaths() {
       if (lastPolygon == null) return;
       final polygon = lastPolygon!;
+      
 
       // Draw filled polygon
       // ignore: deprecated_member_use_from_same_package
